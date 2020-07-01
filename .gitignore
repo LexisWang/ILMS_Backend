@@ -1,0 +1,8 @@
+# Django stuff:
+*.log
+*initial.py
+*.pyc
+ILMS_Backend/.idea
+.devcontainer
+db.sqlite3
+000*

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="a7b942c2-29e5-4e4e-b670-eb4fd9481a09" name="Lexis-Server">
+        <fileTransfer accessType="SFTP" host="120.24.147.33" port="22" sshConfigId="e74c8846-82b8-4924-a223-1aeb5fadca03" sshConfig="root@120.24.147.33:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

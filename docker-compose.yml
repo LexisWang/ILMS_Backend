@@ -1,0 +1,75 @@
+version: "3"
+
+# 网络配置
+networks:
+  ilms-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.127.2.0/24
+
+# 服务配置
+services:
+################## Django项目 ############################
+  ilms_backend:
+    build:
+      context: .
+    container_name: ilms-django
+    env_file:
+      - ./.env
+    restart: always
+    privileged: true
+    networks:
+      ilms-network:
+        ipv4_address: 10.127.2.2
+    ports:
+      - "10000:8000"
+
+################### Nginx服务 ############################
+#  nginx:
+#    image: nginx:1.17-alpine
+#    container_name: ilms-nginx
+#    volumes:
+#    - ./server.conf:/etc/nginx/conf.d/server.conf:rw
+#    - ./nginx/logs:/var/log/nginx:rw
+#    restart: always
+#    privileged: true
+#    ports:
+#    - "10002:80"
+#    - "10003:8080"
+#    networks:
+#      ilms-network:
+#        ipv4_address: 10.127.2.3
+#
+################### Mysql服务 ############################
+#  mysql:
+#    image: mysql:latest
+#    container_name: ilms-mysql
+#    environment:
+#      - MYSQL_ROOT_PASSWORD=123456-abc
+#      - MYSQL_DATABASE=ILMS
+#    volumes:
+#      - ./mysql/conf.d:/etc/mysql/conf.d
+#      - ./mysql/lib/mysql:/var/lib/mysql
+#    ports:
+#      - "10004:3306"
+#    networks:
+#      ilms-network:
+#        ipv4_address: 10.127.2.4
+#
+################### Redis服务 ############################
+#  redis:
+#    image: redis:latest
+#    container_name: ilms-redis
+#    environment:
+#      - MYSQL_ROOT_PASSWORD=123456-abc
+#      - MYSQL_DATABASE=ILMS
+#    volumes:
+#      - ./mysql/conf.d:/etc/mysql/conf.d
+#      - ./mysql/lib/mysql:/var/lib/mysql
+#    ports:
+#      - "10004:3306"
+#    networks:
+#      ilms-network:
+#        ipv4_address: 10.127.2.4
+
