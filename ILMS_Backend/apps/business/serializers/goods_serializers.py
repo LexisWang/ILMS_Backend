@@ -10,6 +10,7 @@ class GoodSerializer(serializers.ModelSerializer):
     class Meta:
         model = GoodsInfo
         fields = [
+            'id',
             'type',
             'order',
             'name',
@@ -32,6 +33,11 @@ class GoodSerializer(serializers.ModelSerializer):
         validated_data['creator'] = request_user
         validated_data['modifier'] = validated_data.get('creator')
         return super().create(validated_data)
+
+
+class GoodSerializerPlus(GoodSerializer):
+    type = serializers.CharField(source='get_type_display')
+    order = serializers.StringRelatedField()
 
 
 if __name__ == '__main__':

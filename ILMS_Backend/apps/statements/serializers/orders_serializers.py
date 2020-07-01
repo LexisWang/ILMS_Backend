@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 # 订单报表序列化器
 class OrderStatementSerial(serializers.Serializer):
+    pk = serializers.IntegerField()
     trans_code = serializers.CharField()
     customer = serializers.StringRelatedField()
     goods_name = serializers.CharField()
@@ -29,7 +30,10 @@ class OrderStatementSerial(serializers.Serializer):
 # 订单报表 'pandas' 序列化器
 class OrderPandasSerializer(PandasSerializer):
     def transform_dataframe(self, dataframe):
-
+        # dataframe = dataframe.append(dataframe[odder_sum_columns].sum().T, ignore_index=True)
+        # dataframe.reset_index(inplace=True)
+        # dataframe['index'] = dataframe['index'] + 1
+        # dataframe.iloc[-1, 0] = '总计'
         return super().transform_dataframe(dataframe)
 
     def get_dataframe(self, data):

@@ -25,8 +25,8 @@ FREIGHT_STATUS_CHOICE = (  # 运单状态选项
     (5, '已废弃')
 )
 GOOD_VIRTUAL_CHOICE = (  # 货物是否虚拟选项
-    (0, '真实'),
-    (1, '虚拟')
+    (0, '虚拟'),
+    (1, '真实')
 )
 FUND_STATUS_CHOICE = (  # 款项状态选项
     (1, '未录入'),

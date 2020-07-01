@@ -1,15 +1,19 @@
 import datetime
 import json
+import os
 from copy import copy
 
 from dateutil.relativedelta import relativedelta
+from django.utils.encoding import escape_uri_path
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.generics import ListAPIView
 from rest_framework.mixins import CreateModelMixin, UpdateModelMixin, DestroyModelMixin, RetrieveModelMixin, \
     ListModelMixin
+from pandas import DataFrame, ExcelWriter, Series
 
 import settings
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django_redis import get_redis_connection
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
@@ -188,3 +192,119 @@ class CustomDjangoFilterBackend(DjangoFilterBackend):
             'queryset': queryset,
             'request': request,
         }
+
+
+# 自定义导出 list 视图
+class CustomExportListView(ListAPIView):
+    # 新增几个类属性
+    excel_name = None  # 单数
+    sheet_names = None  # list
+    total_columns = None  # list
+    sub__models = None  # list
+    sub_serializers = None  # list
+    columns_names = None  # list(list)
+    sub_total = False  # 标识符
+    ini = 0
+
+    # 主调函数
+    def list(self, request, *args, **kwargs):
+        self.group_word = self.request.query_params.get('group_word')
+        dict_data = [self.__old_dict_single()]
+        if self.sub__models:
+            for i in range(len(self.sub__models)):
+                parent_ids = [j.get('pk') for j in dict_data[i]]
+                dict_data.append(self.sub_serializers[i](self.sub__models[i].objects.filter(order__in=parent_ids), many=True).data)
+        dataframe = self.__dict2dataframe(dict_data)
+        last_dataframe = self.transform_dataframe(dataframe)
+        response = self.__dataframe2excel(last_dataframe)
+        return response
+
+    # 获取主序列化后的数据 dict
+    def __old_dict_single(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return serializer.data
+
+    # 序列化后的数据转为 DataFrame
+    def __dict2dataframe(self, dict_data):
+        return [DataFrame(dict_datum) for dict_datum in dict_data]
+
+    # 转换 DataFrame 数据
+    def transform_dataframe(self, dataframe):
+        if self.sub_total:
+            dataframe[0] = self.__add_sub_total(dataframe[0])
+        else:
+            dataframe[0] = self.__add_total(dataframe[0])
+        for i in range(len(dataframe)):
+            if 'pk' in dataframe[i].columns:
+                dataframe[i].drop('pk', axis=1, inplace=True)
+            else:
+                dataframe[i].reset_index(inplace=True)
+                dataframe[i].drop('id', axis=1, inplace=True)
+            dataframe[i].columns = self.columns_names[i]
+        return dataframe
+
+    # 给表添加 总计
+    def __add_total(self, dataframe):
+        dataframe = dataframe.append(dataframe[self.total_columns].sum().T, ignore_index=True)
+        dataframe.reset_index(inplace=True)
+        dataframe['index'] = dataframe['index'] + 1
+        dataframe.iloc[-1, 0] = '总计'
+        return dataframe
+
+    # 给表添加 小计 和 总计
+    def __add_sub_total(self, dataframe):
+        # 1.对表数据排序
+        dataframe = dataframe.sort_values(self.group_word, ignore_index=True)
+
+        # 2.计算总计
+        total_data = dataframe[self.total_columns].sum().T
+
+        # 3.表数据分组求和
+        total_columns = [self.group_word]
+        total_columns.extend(self.total_columns)
+        subtotal = dataframe[total_columns].groupby(self.group_word).sum().T
+        subtotal.loc[self.group_word] = subtotal.columns
+
+        # 5.将分组数据插入到原表数据中
+        # 求出分组求和数据的 'index' 在 原表中个的 'location'
+        location = {}
+        for column_name in subtotal.columns:
+            location.update({column_name: dataframe[dataframe[self.group_word] == column_name].index.tolist()[-1] + 1})
+        # 对应位置插入数据
+        dataframe = dataframe.T
+        for index, value in enumerate(location):
+            dataframe.insert(loc=location.get(value), column='小计', value=subtotal[value], allow_duplicates=True)
+        # 重排表的 'index'
+        dataframe = dataframe.T
+        dataframe.reset_index(inplace=True)
+        dataframe['index'] = dataframe['index'].apply(self.__reset_index)
+
+        # 6.在原表末尾加入总计行
+        dataframe = dataframe.append(total_data, ignore_index=True)
+        dataframe.iloc[-1, 0] = '总计'
+
+        # 8.返回表数据
+        return dataframe
+
+    # 重排表的 序号
+    def __reset_index(self, value):
+        if value == '小计' or value == '合计':
+            self.ini = 0
+            return value
+        else:
+            self.ini += 1
+            return self.ini
+
+    # 表单导出
+    def __dataframe2excel(self, dataframe):
+        writer = ExcelWriter('tmp.xlsx')
+        for i in range(len(dataframe)):
+            dataframe[i].to_excel(writer, sheet_name=self.sheet_names[i], index=False)
+        writer.save()
+        file = open('tmp.xlsx', 'rb')
+        response = FileResponse(file)
+        response['Content-Type'] = 'application/octet-stream'
+        response['Content-Disposition'] = f'attachment;filename={escape_uri_path(self.excel_name)}'
+        os.remove('tmp.xlsx')
+        return response

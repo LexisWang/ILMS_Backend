@@ -3,7 +3,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from systems.models import UsersInfo
-from .goods_serializers import GoodSerializer
+from .goods_serializers import GoodSerializer, GoodSerializerPlus
 from ..models import OrdersInfo, Order2Operator, GoodsInfo
 
 
@@ -109,6 +109,7 @@ class OrderSerializer(OrderSerializerAnti):
     operators = serializers.StringRelatedField(many=True)
     receiver = serializers.StringRelatedField()
     order_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    goods = GoodSerializerPlus(many=True)
 
 
 if __name__ == '__main__':
