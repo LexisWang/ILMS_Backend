@@ -1,6 +1,6 @@
 coreapi==2.3.3
 coreschema==0.0.4
-Django==3.0.6
+Django==3.0.7
 django-filter==2.3.0
 django-mysql==3.7.0
 django-pandas==0.6.2
