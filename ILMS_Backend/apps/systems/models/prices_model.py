@@ -23,7 +23,7 @@ class CusChaPri(model0.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return self.owner_code + self.channel.name
+        return self.owner_code + self.channel_name
 
 
 if __name__ == '__main__':

@@ -2,6 +2,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.db import transaction
 from rest_framework import serializers
 
+from customers.serializers import ReceiversSerializer
 from systems.models import UsersInfo
 from .goods_serializers import GoodSerializer, GoodSerializerPlus
 from ..models import OrdersInfo, Order2Operator, GoodsInfo
@@ -107,7 +108,7 @@ class OrderSerializer(OrderSerializerAnti):
     good_type = serializers.StringRelatedField()
     pay_type = serializers.StringRelatedField()
     operators = serializers.StringRelatedField(many=True)
-    receiver = serializers.StringRelatedField()
+    receiver = ReceiversSerializer()
     order_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     goods = GoodSerializerPlus(many=True)
 

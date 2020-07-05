@@ -53,10 +53,15 @@ class UsersSerializerAnti(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
+        roles = validated_data.pop('roles')
         request_user = self.context.get('request').user
         if isinstance(request_user, AnonymousUser):
             request_user = None
         validated_data['modifier'] = request_user
+
+        with transaction.atomic():
+            instance.roles.set(roles)
+            instance.save()
         return super().update(instance, validated_data)
 
 

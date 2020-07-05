@@ -9,4 +9,4 @@ COPY ./requirements.txt .
 RUN set -x \
     && pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple \
     && uwsgi --ini /opt/uwsgi.ini \
-    && nginx -c /opt/nginx.conf
+    && /usr/local/nginx/sbin/nginx -c /opt/nginx.conf
