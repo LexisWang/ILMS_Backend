@@ -33,7 +33,11 @@ DEBUG = os.getenv('DEBUG') if os.getenv('DEBUG') else True
 ALLOWED_HOSTS = ['*']
 
 # 跨域的配置
-CORS_ORIGIN_WHITELIST = ()
+# CORS_ORIGIN_ALLOW_ALL = True  # 允许所有的域名
+CORS_ORIGIN_WHITELIST = (  # 允许指定的域名
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+)
 # 允许携带cookie
 CORS_ALLOW_CREDENTIALS = True
 
@@ -50,6 +54,7 @@ INSTALLED_APPS = [
 
     'rest_framework',  # RestFul 风格库
     'django_filters',  # 数据库过滤插件
+    'corsheaders',  # 允许跨域的配置
 
     'systems',
     'customers',
@@ -58,6 +63,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # 允许跨域的配置
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
