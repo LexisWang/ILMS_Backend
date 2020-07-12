@@ -72,7 +72,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'utils.MixinClass.my_middleware'
+    # 'utils.MixinClass.my_middleware'
 ]
 
 ROOT_URLCONF = 'ILMS_Backend.urls'

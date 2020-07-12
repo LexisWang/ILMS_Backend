@@ -11,7 +11,8 @@ from rest_framework_jwt.utils import jwt_payload_handler, jwt_encode_handler
 
 from utils.list_pages import CusResponse, MySearchFilter, ReadModelViewSetPlus, WriteModelViewSetPlus
 from ..models import UsersInfo, BranchesInfo, RolesInfo
-from ..serializers import UsersSerializerAnti, UsersSerializer, JwtLogSerializer, AnonymousUser, UpdatePasswordSerial
+from ..serializers import UsersSerializerAnti, UsersSerializer, JwtLogSerializer, AnonymousUser, UpdatePasswordSerial, \
+    UserUpdateSerializer
 from ..utils import UserFilterSet, CheckUserAccFilter, CheckUserNameFilter
 
 
@@ -52,7 +53,13 @@ class UsersWriteViews(WriteModelViewSetPlus):
     """用户写视图集"""
 
     queryset = UsersInfo.objects.filter(~Q(pk=1))
-    serializer_class = UsersSerializerAnti
+    serializer_class = [UsersSerializerAnti, UserUpdateSerializer]
+
+    def get_serializer_class(self):
+        if self.action == 'update':
+            return self.serializer_class[1]
+        else:
+            return self.serializer_class[0]
 
     def create(self, request, *args, **kwargs):
         if not self.request.data.get('username'):

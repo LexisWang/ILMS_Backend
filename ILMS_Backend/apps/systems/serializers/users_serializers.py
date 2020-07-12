@@ -2,9 +2,37 @@ from django.contrib.auth.models import AnonymousUser
 from django.db import transaction
 from rest_framework import serializers
 
-from ..models import UsersInfo, RolesInfo
+from ..models import UsersInfo, RolesInfo, BranchesInfo
 
 
+# 用户更新序列化器
+class UserUpdateSerializer(serializers.Serializer):
+    account = serializers.CharField(required=False)
+    username = serializers.CharField(required=False)
+    mobile = serializers.CharField(required=False)
+    status = serializers.IntegerField(required=False)
+    bran = serializers.PrimaryKeyRelatedField(label='所属分部', help_text='所属分部', queryset=BranchesInfo.objects.all(), required=False)
+    roles = serializers.ManyRelatedField(
+        child_relation=serializers.PrimaryKeyRelatedField(label='所属角色', help_text='用户关联的角色',
+                                                          queryset=RolesInfo.objects.all()), help_text='用户关联的角色',
+        required=False, label='所属角色')
+
+    def update(self, instance, validated_data):
+        roles = validated_data.pop('roles')
+        request_user = self.context.get('request').user
+        if isinstance(request_user, AnonymousUser):
+            request_user = None
+        validated_data['modifier'] = request_user
+
+        with transaction.atomic():
+            for attr in validated_data.keys():
+                setattr(instance, attr, validated_data.get(attr))
+            instance.roles.set(roles)
+            instance.save()
+        return instance
+
+
+# 用户创建序列化器
 class UsersSerializerAnti(serializers.ModelSerializer):
     """用户序列反化器"""
 
@@ -52,19 +80,8 @@ class UsersSerializerAnti(serializers.ModelSerializer):
             user.save()
         return user
 
-    def update(self, instance, validated_data):
-        roles = validated_data.pop('roles')
-        request_user = self.context.get('request').user
-        if isinstance(request_user, AnonymousUser):
-            request_user = None
-        validated_data['modifier'] = request_user
 
-        with transaction.atomic():
-            instance.roles.set(roles)
-            instance.save()
-        return super().update(instance, validated_data)
-
-
+# 用户读取序列化器
 class UsersSerializer(UsersSerializerAnti):
     """角色序列化器"""
 
@@ -83,6 +100,7 @@ class UsersSerializer(UsersSerializerAnti):
     #     return {'account': obj.modifier.account, 'username': obj.modifier.username}
 
 
+# 用户登陆
 class JwtLogSerializer(serializers.Serializer):
     """JWT登录序列化器"""
 
